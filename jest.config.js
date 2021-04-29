@@ -3,10 +3,10 @@ module.exports = {
   preset: 'ts-jest',
   collectCoverageFrom: ['src/**', '!src/index.ts'],
   modulePathIgnorePatterns: ['__ignore_test__'],
-  testMatch: ['<rootDir>/test/*.ts'],
+  testMatch: ['<rootDir>/tests/*.ts', '<rootDir>/tests/**/*.ts'],
   coverageThreshold: {
     global: {
-      branches: 97.68,
+      branches: 98.12,
       functions: 100,
       lines: 100,
     },

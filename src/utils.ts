@@ -1,89 +1,135 @@
-import {
-  IHideawayActionReducer,
-  THideawayAction,
-  THideawayAny,
-  IHideawayActionContent,
-  TFHideawayCombineShallow,
-  THideawayAnyObject,
-  TFHideawayReducer,
-} from './contracts';
+import { TObject } from './contracts';
 
-export const isObject = (value: THideawayAny) =>
+/** Used to check objects for own properties. */
+const { hasOwnProperty } = Object.prototype;
+
+/**
+ * Returns whether or not an object has an own property with the specified name.
+ */
+export const has = (object: TObject, key: string) => {
+  return isObject(object) && hasOwnProperty.call(object, key);
+};
+
+/**
+ * Returns whether or not a path exists in an object. Only the object's
+ * own properties are checked.
+ */
+export const hasPath = (object: TObject, path: string[]) => {
+  let index = -1;
+  let { length } = path;
+  let result = false;
+  let key;
+
+  while (++index < length) {
+    key = path[index];
+    if (!(result = object != null && hasOwnProperty.call(object, key))) {
+      break;
+    }
+    object = object[key];
+  }
+
+  if (result || ++index != length) {
+    return result;
+  }
+  length = object == null ? 0 : object.length;
+  return !!length && (Array.isArray(object) || isObject(object));
+};
+
+/**
+ * Return true for object and array.
+ */
+export const isAnyObject = (value: any) =>
+  typeof value === 'object' && value !== null;
+
+/**
+ * Return true only for the object.
+ */
+export const isObject = (value: any) =>
   typeof value === 'object' && value !== null && value.constructor === Object;
 
-export const createReducer = <S>(
-  initialState: S,
-  reducers: IHideawayActionReducer<THideawayAny>,
-) => (state: S, action: THideawayAction) => {
-  const currentState = state === undefined ? initialState : state;
-  if (Object.prototype.hasOwnProperty.call(reducers, action.type)) {
-    return reducers[action.type](currentState, action) as S;
-  }
-  return currentState;
-};
-
-export const compose = <S>(...reducers: TFHideawayReducer<S>[]) => (
-  initialState: S,
-  action: THideawayAction,
-) => reducers.reduce((state, reducer) => reducer(state, action), initialState);
-
 /**
- * Message from `combineReducers`
- * {@link https://github.com/reduxjs/redux/blob/master/src/combineReducers.ts}
+ * Set a value inside the object based on the path.
  */
-export const getUndefinedStateErrorMessage = (
-  key: string,
-  action: IHideawayActionContent<THideawayAny>,
-) => {
-  const actionType = action && action.type;
-  const actionDescription =
-    (actionType && `action "${String(actionType)}"`) || 'an action';
 
-  return (
-    `Given ${actionDescription}, reducer "${key}" returned undefined. ` +
-    `To ignore an action, you must explicitly return the previous state. ` +
-    `If you want this reducer to hold no value, you can return null instead` +
-    ` of undefined.`
-  );
+export const setWith = (object: any, path: string[], value: any): TObject => {
+  if (!isAnyObject(object)) return object;
+
+  const length = path.length;
+  const lastIndex = length - 1;
+
+  let index = -1;
+  let nested: any = object;
+  while (nested !== null && ++index < length) {
+    const key = path[index];
+    let newValue = value;
+    if (index != lastIndex) {
+      const objValue = nested[key];
+      // @ts-ignore
+      newValue = Object(objValue, key, nested);
+    }
+    nested[key] = newValue;
+    nested = nested[key];
+  }
+  return object;
 };
 
 /**
- * Simplified version of `combineReducers`
- * {@link https://github.com/reduxjs/redux/blob/master/src/combineReducers.ts}
+ * If the given non-null object has a value at the given path, it returns the
+ * value at that path. Otherwise, it returns the provided default value.
  */
-export const combineShallow: TFHideawayCombineShallow = (reducers) => (
-  state,
-  action,
-) => {
-  const nextState: THideawayAnyObject = {};
-  const { type, nested } = action;
-  const hasAllObject = (nested && nested.allObject) || false;
-
-  if (hasAllObject && type.endsWith('_RESPONSE')) {
-    const reducer = reducers['value'];
-    const valueState = reducer(state, action);
-    if (typeof valueState === 'undefined') {
-      const errorMessage = getUndefinedStateErrorMessage('value', action);
-      throw new Error(errorMessage);
+export const pathOr = (object: TObject, path: string[], value: any) => {
+  let currObj = object;
+  let index = 0;
+  let currentPath;
+  while (index < path.length) {
+    if (currObj == null) {
+      break;
     }
-    return valueState;
+    currentPath = path[index];
+    currObj = currObj[currentPath];
+    index += 1;
+  }
+  return currObj || value;
+};
+
+/**
+ * Returns a partial copy of an object omitting the keys specified.
+ */
+export const omit = (object: TObject, keys: string[]) => {
+  const result: TObject = {};
+  const index: TObject = {};
+  let idx = 0;
+  const len = keys.length;
+
+  while (idx < len) {
+    index[keys[idx]] = 1;
+    idx += 1;
   }
 
-  Object.keys(reducers).map((key: string) => {
-    const reducer = reducers[key];
-    const previousStateForKey = isObject(state) ? state[key] : undefined;
-    const nextStateForKey = reducer(previousStateForKey, action);
-    if (typeof nextStateForKey === 'undefined') {
-      const errorMessage = getUndefinedStateErrorMessage(key, action);
-      throw new Error(errorMessage);
+  for (const prop in object) {
+    if (!hasOwnProperty.call(index, prop)) {
+      result[prop] = object[prop];
     }
-    nextState[key] = nextStateForKey;
-    return null;
-  });
-  return nextState;
+  }
+  return result;
 };
 
-export const version = () => {
-  const { version } = require('../package.json');
-  return version;
+export const deepCopy = (value: any, deep = -1, countDeep = 0): any => {
+  if (deep !== -1 && countDeep >= deep) return value;
+  if (!isAnyObject(value)) {
+    return value;
+  }
+  const isLimitReached = deep !== -1 && countDeep + 1 <= deep;
+  if (Array.isArray(value)) {
+    return value.map((v) =>
+      isAnyObject(v) && !isLimitReached ? deepCopy(v, deep, countDeep + 1) : v,
+    );
+  }
+  const result: TObject = {};
+  for (const [k, v] of Object.entries(value)) {
+    result[k] = !isLimitReached ? deepCopy(v, deep, countDeep + 1) : v;
+  }
+  return result;
 };
+
+export const isNull = (value: any) => value === undefined || value === null;

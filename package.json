@@ -1,6 +1,6 @@
 {
   "name": "hideaway",
-  "version": "1.0.0",
+  "version": "2.0.0-beta.0",
   "description": "Hideaway middleware for Redux",
   "license": "MIT",
   "homepage": "https://github.com/Ozahata/hideaway",
@@ -13,7 +13,6 @@
     "react",
     "react-redux",
     "redux",
-    "thunk",
     "hideaway",
     "middleware",
     "redux-middleware",
@@ -28,53 +27,43 @@
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src test --ext js,ts",
+    "lint": "eslint src tests --ext js,ts",
     "clean": "rimraf dist coverage",
-    "format:check": "prettier --list-different \"{src,test}/**/*.{js,ts}\"",
+    "format:check": "prettier --list-different \"{src,tests}/**/*.{js,ts}\"",
     "check-types": "tsc --noEmit",
     "prepublishOnly": "npm run clean && npm run check-types && npm run format:check && npm run lint && npm test",
-    "prepack": "npm run clean && webpack --mode=production --progress --profile --color"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn lint",
-      "pre-push": "yarn test:coverage"
-    }
+    "prepack": "npm run clean && webpack --mode=production --progress --profile --color",
+    "prepare": "husky install"
   },
   "peerDependencies": {
     "redux": "^4"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
-    "@babel/core": "^7.12.3",
+    "@babel/core": "^7.14.0",
     "@babel/plugin-transform-runtime": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-env": "^7.14.1",
     "@babel/preset-typescript": "^7.12.1",
     "@types/jest": "^26.0.15",
-    "@types/lodash": "^4.14.165",
-    "@types/node": "^14.14.7",
-    "@types/ramda": "^0.27.32",
-    "@typescript-eslint/eslint-plugin": "^4.7.0",
-    "@typescript-eslint/parser": "^4.7.0",
+    "@types/node": "^15.0.2",
+    "@typescript-eslint/eslint-plugin": "^4.22.1",
+    "@typescript-eslint/parser": "^4.22.1",
     "babel-jest": "^26.6.3",
     "eslint": "^7.13.0",
     "eslint-plugin-prettier": "^3.1.3",
-    "husky": "^4.3.0",
+    "husky": "^6.0.0",
     "jest": "^26.6.3",
     "prettier": "^2.1.2",
     "redux": "^4.0.5",
     "rimraf": "^3.0.2",
-    "ts-jest": "^26.4.4",
-    "ts-loader": "^8.0.11",
+    "ts-jest": "^26.5.6",
+    "ts-loader": "^9.1.2",
     "typescript": "^4.0.5",
-    "webpack": "^5.4.0",
+    "webpack": "^5.36.2",
     "webpack-cli": "^4.2.0",
     "webpack-merge": "^5.4.0"
   },
-  "dependencies": {
-    "lodash": "^4.17.15",
-    "ramda": "^0.27.0"
-  },
+  "dependencies": {},
   "npmName": "hideaway",
   "npmFileMap": [
     {

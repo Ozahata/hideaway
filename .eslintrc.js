@@ -21,6 +21,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['error'],
     'linebreak-style': ['error', 'unix'],
     'no-unused-vars': 'off',
+    'no-extra-boolean-cast': 'off',
     'prettier/prettier': 'error',
     semi: ['error', 'always'],
   },

@@ -4,12 +4,10 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { applyMiddleware, createStore } from 'redux';
 import { composeWithDevTools } from 'redux-devtools-extension';
-import thunk from 'redux-thunk';
-import App from './container';
-import { reducers } from './controllers/reducers';
+import { App } from './App';
+import { reducers } from './redux/reducers';
 
-const middleware = [hideaway(), thunk];
-const enhancer = applyMiddleware(...middleware);
+const enhancer = applyMiddleware(hideaway);
 const store = createStore(reducers, {}, composeWithDevTools(enhancer));
 
 ReactDOM.render(

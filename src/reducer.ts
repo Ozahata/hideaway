@@ -1,210 +1,143 @@
-import _ from 'lodash';
+import { HIDEAWAY } from './constants';
+import { HideawayAction, Reducers, TObject } from './contracts';
+import { generateNested, generatePath } from './nested';
+import { has, isObject, pathOr, deepCopy, isNull } from './utils';
 import {
-  IHideawayActionContent,
-  IHideawayActionReducer,
-  IHideawayCombineOptions,
-  IHideawayNestedProps,
-  IHideawayReducerOptions,
-  TFHideawayReducer,
-  THideawayAny,
-  TStateOrNull,
-} from './contracts';
-import {
-  generateStatusReducer,
-  removeState,
-  validateStateManager,
+  createStateManager,
+  generateStateManager,
+  isStateManagerFn,
 } from './manager';
-import { generateNested, reducerNested } from './nested';
+import { Reducer } from 'redux';
+
+interface ReducerArgs {
+  /**
+   * Make the API request and manage the process, returning the following
+   * parameters:
+   * @param loading Return true when run the API and false when the API returns
+   * the response
+   * @param value Return the content from the response. The response returns as
+   * JSON format when the 'content-type' set to 'application/json.'
+   * @param error Return the error when the request fails
+   */
+  isStateManager?: boolean;
+
+  /**
+   * The initial value when it does not find the path.
+   * PS: to nested works with state manager, this value must be true.
+   */
+  nestedInitialState?: any;
+}
 
 /**
- * Manage the reducers
- *
- * @param {boolean} displayError It display the error on console if the fetch
- * fails
- * @param {S} initialState set an initial state for the reducer. For nested that
- * doesn't set the nested, it will assing to a root key
- * @param {IHideawayNestedProps} nested Settings necessary if it sets isNested
- * @param {boolean} isNested It enables nested path
- * @param {boolean} hasNested It doens't enable the nested path but store it
- * with the state.
- * @param {boolean} isStateManager It enables the state manager for API use
- * @param {IHideawayActionReducer} reducers The object contains the action
- * name as a key and the reducer as value.
+ * Return a function to combine the reducers.
+ * @param initialState The starting state. It is null by default.
+ * @param options Map of options to customize the reducer.
  */
-export class ReducerManagement<S> {
-  displayError: boolean;
+export const createReducer = (
+  initialState: any = null,
+  options: ReducerArgs = {},
+) => {
+  const { isStateManager, nestedInitialState } = options;
+  const reducersMap: TObject = {};
 
-  initialState: S;
-
-  nested: IHideawayNestedProps | undefined;
-
-  isNested: boolean;
-
-  hasNested: boolean;
-
-  isStateManager: boolean;
-
-  reducers: IHideawayActionReducer<S>;
-
-  constructor(props: IHideawayReducerOptions<S> = {}) {
-    const {
-      displayError = false,
-      // initialState forces null because state doesn't allow undefined
-      initialState = null,
-      isNested = false,
-      hasNested = false,
-      isStateManager = false,
-      nested,
-      reducers = {},
-    } = props;
-    this.displayError = displayError;
-    this.isNested = isNested;
-    this.hasNested = hasNested || isNested;
-    this.initialState = this.createInitialState(
-      initialState,
-      isStateManager,
-      isNested,
-      hasNested,
-      nested,
-    );
-    this.nested = nested;
-    this.isStateManager = isStateManager;
-    this.reducers = {};
-    _.forEach(reducers, (reducer, name) => this.add(name, reducer));
-  }
-
-  private createInitialState = (
-    value: TStateOrNull<S>,
-    isStateManager: boolean,
-    isNested: boolean,
-    hasNested: boolean,
-    nested?: IHideawayNestedProps,
-  ) => {
-    let result = value as THideawayAny;
-    if (isStateManager) {
-      result = validateStateManager(value, nested);
-      if (hasNested) {
-        result.nested = { keys: {}, path: [], allObject: false };
+  /**
+   * Combine the map of reducer and return one reducer.
+   * @param reducers Map of reducers
+   * @returns Reducer
+   */
+  const combine = (reducers: Reducers): any => {
+    Object.keys(reducers).forEach((name) => {
+      if (isStateManager) {
+        reducersMap[name] = generateStateManager(name, reducers[name]);
+      } else {
+        reducersMap[name] = reducers[name];
       }
+    });
+    return compose();
+  };
+
+  const callReducer = (
+    reducer: Reducer,
+    state: any,
+    action: HideawayAction,
+  ) => {
+    let currState = isObject(state) ? deepCopy(state) : state;
+    let currPath: string[] = [];
+
+    const { path, valuePreStore } = action[HIDEAWAY] || {};
+    const isNested =
+      (Array.isArray(path) && path.length > 0) ||
+      nestedInitialState !== undefined;
+
+    if (isNested) {
+      const { path, keys } = action[HIDEAWAY];
+      const defaultValue = nestedInitialState || null;
+      currPath = generatePath(keys, path);
+      currState = pathOr(currState, currPath, defaultValue);
+    }
+    if (isStateManager && !isStateManagerFn(currState)) {
+      currState = createStateManager(currState);
+    }
+
+    let value = reducer(currState, action);
+    const preNestedValue = value;
+
+    if (isNested) {
+      // It should include inside the original state
+      value = generateNested(state, currPath, value);
+    }
+
+    if (valuePreStore) {
+      value = valuePreStore(value, action, preNestedValue);
+    }
+
+    if (isNested && typeof value === 'object') {
+      // When the curentState is an object, it is the same state
+      return { ...value };
+    }
+    return value;
+  };
+
+  const removeState = (type: string) =>
+    type.replace(/_(REQUEST|RESPONSE|ERROR)$/g, '');
+
+  const getInitialState = (state: any) => {
+    const isNested = nestedInitialState !== undefined;
+
+    if (isStateManager && !isStateManagerFn(state) && !isNested) {
+      return createStateManager(state || initialState);
     }
     if (isNested) {
-      if (
-        nested === undefined ||
-        nested.keys === undefined ||
-        nested.path === undefined
-      ) {
-        // Nested needs to be an object (initialState is not necessary)
+      if (isStateManager && isStateManagerFn(state)) {
         return {};
       }
-      result = generateNested({}, nested as IHideawayNestedProps, result);
+      return isObject(state) ? state : initialState;
     }
-    return result;
+    return isNull(state) ? initialState : state;
   };
 
-  /**
-   * Add the reducer to the reducer manager
-   *
-   * @param {string} name It is the action name
-   * @param {TFHideawayReducer} reducer The reducer
-   */
-  add = (name: string, reducer: TFHideawayReducer<S>) => {
-    let currentReducer = reducer;
-    if (this.isStateManager) {
-      currentReducer = generateStatusReducer(
-        name,
-        reducer,
-        this.hasNested,
-        this.displayError,
+  const compose = () => (state: any, action: HideawayAction) => {
+    // Call 3 times for both because is the redux test
+    // https://github.com/reduxjs/redux/issues/382
+
+    let currentState = getInitialState(state);
+
+    const { type } = action;
+    const hasActionType = has(reducersMap, type);
+    const stateManagerType = removeState(type);
+    const hasStateManagerType = has(reducersMap, stateManagerType);
+
+    if (hasActionType) {
+      currentState = callReducer(reducersMap[type], currentState, action);
+    } else if (hasStateManagerType) {
+      currentState = callReducer(
+        reducersMap[stateManagerType],
+        currentState,
+        action,
       );
-    }
-    this.reducers[name] = currentReducer;
-  };
-
-  /**
-   * Add the reducer without state manager check.
-   *
-   * @param {string} name It is the action name
-   * @param {TFHideawayReducer} reducer The reducer
-   */
-  addWithoutStateCheck = (name: string, reducer: TFHideawayReducer<S>) => {
-    this.reducers[name] = reducer;
-  };
-
-  /**
-   * Compose all the reducers registered
-   */
-  composeReducers = () => (state: S, action: IHideawayActionContent<S>) => {
-    // State can be undefined (reducer doesn't accept)
-    const currentState = state === undefined ? this.initialState : state;
-    const { type, nested } = action;
-    const typeWithoutState = removeState(type);
-    const typeMatched = _.has(this.reducers, type);
-    const typeWithoutStateMatched = _.has(this.reducers, typeWithoutState);
-    const hasMatched = typeMatched || typeWithoutStateMatched;
-    // Ignore value, because it doesn't match with the requirement
-    if (hasMatched) {
-      if (this.isNested && nested === undefined) {
-        console.warn('The nested attributes are missing');
-        return currentState;
-      }
-      const reducer = typeMatched
-        ? this.reducers[type]
-        : this.reducers[typeWithoutState];
-      if (
-        nested &&
-        nested.allObject &&
-        ((this.isStateManager && type.endsWith('_RESPONSE')) ||
-          !this.isStateManager)
-      ) {
-        return reducer(currentState, action);
-      }
-      if (this.isNested && action.nested) {
-        return reducerNested(currentState, action, reducer);
-      }
-      return reducer(currentState, action);
     }
     return currentState;
   };
 
-  /**
-   * Combine the reducers only.
-   * By default it will NOT check if status manager is true.
-   * @param {IHideawayActionReducer} reducers The object contains the action
-   * name as a key and the reducer as value.
-   * @param {IHideawayCombineOptions} options
-   */
-  combineOnly = (
-    reducers: IHideawayActionReducer<S>,
-    options: IHideawayCombineOptions = { ignoreCheck: true },
-  ) => {
-    const { ignoreCheck } = options;
-    if (ignoreCheck) {
-      _.forEach(reducers, (reducer, name) =>
-        this.addWithoutStateCheck(name, reducer),
-      );
-    } else {
-      _.forEach(reducers, (reducer, name) => this.add(name, reducer));
-    }
-  };
-
-  /**
-   * Combine the reducers.
-   * By default it will check if status manager is true.
-   * @param {IHideawayActionReducer} reducers The object contains the action
-   * name as a key and the reducer as value.
-   * @param {IHideawayCombineOptions} options
-   */
-  combine = (
-    reducers: IHideawayActionReducer<S>,
-    options: IHideawayCombineOptions = { ignoreCheck: false },
-  ) => {
-    this.combineOnly(reducers, options);
-    return this.composeReducers();
-  };
-}
-
-export class ReducerStateManagement<S> extends ReducerManagement<S> {
-  constructor(props: IHideawayReducerOptions<S> = {}) {
-    super({ isStateManager: true, ...props });
-  }
-}
+  return { combine, callReducer };
+};

@@ -1,118 +1,55 @@
-import { AnyAction, Dispatch, Middleware } from 'redux';
+import { MiddlewareAPI } from 'redux';
+import { HIDEAWAY } from './constants';
 import {
-  HIDEAWAY,
-  IHideawayAction,
-  IHideawayActionContent,
-  IHideawayOptions,
-  IThunk,
-  THideawayAction,
-  THideawayDispatch,
-  THideawayReason,
+  HideawayAction,
+  HideawayDispatch,
+  OnError,
+  TObject,
 } from './contracts';
-import { managerApiRequest } from './manager';
+import { managerApi } from './manager';
+import { has } from './utils';
 
-export const hideaway = <S, DispatchExt = {}>(
-  options: IHideawayOptions<S, DispatchExt> = {},
-) => {
-  const middleaware: Middleware<
-    DispatchExt,
-    S,
-    THideawayDispatch<S, DispatchExt>
-  > = (apiMiddleware) => (next: Dispatch) => <R>(
-    action: THideawayAction<R, DispatchExt>,
-  ) => {
-    if (action && HIDEAWAY in action) {
-      const { withExtraArgument, onError: onErrorMiddleware } = options;
-      const actionAPI = action as IHideawayAction<S, DispatchExt>;
-      const {
-        type,
-        api,
-        apiPreReducer,
-        predicate = () => true,
-        nested,
-        complement,
-        onError: onErrorAction,
-        isStateManager = false,
-      } = actionAPI[HIDEAWAY] as IHideawayActionContent<S, DispatchExt>;
-      const middleawareProcess: IThunk<Promise<void>, S, DispatchExt> = (
-        dispatch,
-        getState,
-      ) => {
-        if (!predicate(getState, withExtraArgument || {}) || !api)
-          return Promise.resolve();
+interface MiddlewareArgs {
+  /**
+   * A function that is triggered if the API returns an error.
+   */
+  onError?: OnError;
+  /**
+   * Custom argument to be inject in the function.
+   * Used by redux-thunk.
+   */
+  extraArgument?: TObject;
+}
 
-        if (isStateManager) {
-          return managerApiRequest<S, DispatchExt>(
-            actionAPI[HIDEAWAY] as IHideawayActionContent<S, DispatchExt>,
-            getState,
-            dispatch,
-            onErrorMiddleware,
-            withExtraArgument,
-          );
-        }
-        return api(dispatch, getState, withExtraArgument)
-          .then((response: Response) => {
-            if (response.ok) {
-              const contentType = response.headers.get('content-type');
-              return contentType &&
-                contentType.indexOf('application/json') !== -1
-                ? response.json()
-                : response.text();
-            }
-            // Any status code
-            throw response;
-          })
-          .then((body: S) => {
-            const response: IHideawayActionContent<S, DispatchExt> = {
-              type,
-              payload: apiPreReducer ? apiPreReducer(body) : body,
-              ...(nested && { nested }),
-              ...(complement && { complement }),
-            };
-            dispatch(response);
-            return Promise.resolve();
-          })
-          .catch(async (errorData: THideawayReason) => {
-            let reason: THideawayReason = errorData;
-            if (reason.constructor.name === 'Response') {
-              reason = await (errorData as Response)
-                .json()
-                .then((body) => body);
-            }
-            const actionContent: IHideawayActionContent<
-              THideawayReason,
-              DispatchExt
-            > = {
-              type,
-              payload: reason,
-              ...(nested && { nested }),
-              ...(complement && { complement }),
-            };
-            if (onErrorMiddleware) {
-              await onErrorMiddleware(
-                actionContent,
-                getState,
-                dispatch,
-                onErrorAction,
-                withExtraArgument,
-              );
-            } else if (onErrorAction) {
-              await onErrorAction(
-                actionContent,
-                getState,
-                dispatch,
-                undefined,
-                withExtraArgument,
-              );
-            }
-            return Promise.resolve();
-          });
-      };
-      return apiMiddleware.dispatch(middleawareProcess);
+export const createHideawayMiddleware = ({
+  extraArgument,
+  onError: middlewareError,
+}: MiddlewareArgs = {}) => {
+  return ({ dispatch, getState }: MiddlewareAPI<HideawayDispatch>) => (
+    next: HideawayDispatch,
+  ) => (action: HideawayAction) => {
+    // From https://github.com/reduxjs/redux-thunk/blob/master/src/index.js
+    /* istanbul ignore next */
+    if (typeof action === 'function') {
+      return (action as Function)(dispatch, getState, extraArgument);
     }
-
-    // next requires an action
-    return action ? next((action as unknown) as AnyAction) : undefined;
+    if (has(action, HIDEAWAY) && has(action[HIDEAWAY], 'api')) {
+      const { predicate, onError: actionError } = action[HIDEAWAY];
+      const onError = actionError || middlewareError;
+      const canRunApi = predicate
+        ? predicate(dispatch, getState, extraArgument, action)
+        : true;
+      if (canRunApi) {
+        managerApi(dispatch, getState, extraArgument, action, onError);
+      }
+      return null;
+    }
+    return next(action);
   };
-  return middleaware;
 };
+
+const hideaway = createHideawayMiddleware();
+
+const hideawayWithOptions = createHideawayMiddleware;
+
+export { hideaway, hideawayWithOptions };

@@ -1,0 +1,12 @@
+input {
+  margin-left: 8px;
+}
+
+label {
+  display: block;
+  padding: 8px;
+}
+
+button {
+  margin-left: 8px;
+}
