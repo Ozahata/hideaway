@@ -6,3 +6,5 @@ export * from './nested';
 export * from './reducer';
 export * from './selectors';
 export * from './utils';
+export * from './legacy';
+export * from './legacyContracts';

@@ -1,8 +1,8 @@
 module.exports = {
   verbose: true,
   preset: 'ts-jest',
-  collectCoverageFrom: ['src/**', '!src/index.ts'],
-  modulePathIgnorePatterns: ['__ignore_test__'],
+  collectCoverageFrom: ['src/**', '!src/index.ts', '!src/legacy.ts'],
+  testPathIgnorePatterns: ['/__ignore_tests__/'],
   testMatch: ['<rootDir>/tests/*.ts', '<rootDir>/tests/**/*.ts'],
   coverageThreshold: {
     global: {
