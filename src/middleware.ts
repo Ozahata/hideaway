@@ -25,27 +25,27 @@ export const createHideawayMiddleware = ({
   extraArgument,
   onError: middlewareError,
 }: MiddlewareArgs = {}) => {
-  return ({ dispatch, getState }: MiddlewareAPI<HideawayDispatch>) => (
-    next: HideawayDispatch,
-  ) => (action: HideawayAction) => {
-    // From https://github.com/reduxjs/redux-thunk/blob/master/src/index.js
-    /* istanbul ignore next */
-    if (typeof action === 'function') {
-      return (action as Function)(dispatch, getState, extraArgument);
-    }
-    if (has(action, HIDEAWAY) && has(action[HIDEAWAY], 'api')) {
-      const { predicate, onError: actionError } = action[HIDEAWAY];
-      const onError = actionError || middlewareError;
-      const canRunApi = predicate
-        ? predicate(dispatch, getState, extraArgument, action)
-        : true;
-      if (canRunApi) {
-        managerApi(dispatch, getState, extraArgument, action, onError);
+  return ({ dispatch, getState }: MiddlewareAPI<HideawayDispatch>) =>
+    (next: HideawayDispatch) =>
+    (action: HideawayAction) => {
+      // From https://github.com/reduxjs/redux-thunk/blob/master/src/index.js
+      /* istanbul ignore next */
+      if (typeof action === 'function') {
+        return (action as Function)(dispatch, getState, extraArgument);
       }
-      return null;
-    }
-    return next(action);
-  };
+      if (has(action, HIDEAWAY) && has(action[HIDEAWAY], 'api')) {
+        const { predicate, onError: actionError } = action[HIDEAWAY];
+        const onError = actionError || middlewareError;
+        const canRunApi = predicate
+          ? predicate(dispatch, getState, extraArgument, action)
+          : true;
+        if (canRunApi) {
+          managerApi(dispatch, getState, extraArgument, action, onError);
+        }
+        return null;
+      }
+      return next(action);
+    };
 };
 
 const hideaway = createHideawayMiddleware();

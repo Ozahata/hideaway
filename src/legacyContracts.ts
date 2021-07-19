@@ -17,7 +17,7 @@ export interface IHideawayNestedProps {
 export type TFHideawayGetState<S> = () => S;
 
 export interface IHideawayActionContent<S, DispatchExt = {}> {
-  type?: string;
+  type: string;
   api?: TFHideawayApi<S, DispatchExt>;
   apiPreReducer?: TFHideawayApiPreReducer<S>;
   payload?: S;
@@ -113,7 +113,7 @@ export type TFGetValue = <R = THideawayAny, S = THideawayAny>(
 
 export interface IHideawayStatusManagerOptions<
   R = THideawayAny,
-  E = THideawayAny
+  E = THideawayAny,
 > {
   loading?: boolean;
   value?: R;

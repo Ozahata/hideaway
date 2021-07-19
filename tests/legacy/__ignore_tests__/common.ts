@@ -41,7 +41,7 @@ export class ResponseMock {
   bodyUsed: boolean;
 
   constructor(props: ResponseProps = {}) {
-    this.headers = new Headers(props.headers);
+    this.headers = props.headers as Headers;
     this.status = props.status || 200;
     this.ok = props.ok || this.status === 200;
     this.redirected = props.redirected || this.status === 302;
@@ -65,7 +65,7 @@ export class ResponseMock {
   };
 
   text: () => Promise<string> = () =>
-    Promise.resolve(((this.body as unknown) as string) || '');
+    Promise.resolve((this.body as unknown as string) || '');
 }
 
 export const mockAPI = (obj?: ResponseProps) => {
@@ -87,12 +87,12 @@ export const createMockStore = (): MockStore => {
     dispatchList.push(result);
     return result;
   };
-  return ({
+  return {
     dispatchList,
     data,
     dispatch,
     getState,
-  } as unknown) as MockStore;
+  } as unknown as MockStore;
 };
 
 export const triggerAction = <S = TTestState, Dispatch = {}>(
@@ -105,7 +105,7 @@ export const triggerAction = <S = TTestState, Dispatch = {}>(
   //@ts-ignore
   const middleware = hideaway.withOptions(options);
 
-  const middlewareAPI = (storeObj as unknown) as MiddlewareAPI<
+  const middlewareAPI = storeObj as unknown as MiddlewareAPI<
     THideawayDispatch<any, Dispatch>,
     any
   >;

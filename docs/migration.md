@@ -69,7 +69,7 @@ The `ReducerStateManagement` was removed in favor of a unique and straightforwar
 The `options` has the following changes:
 
 - `displayError` - It was removed in favor of `onError`
-- `isNested` - It was removed and replaced to detect the use of the path field. When working with the state manager, the nestedInitialState must be set.
+- `isNested` - It was removed and replaced to detect the use of the path field. When working with the state manager, the `nestedInitialState` must be set.
 - `nest` - It was removed in favor of mounting in the `initialState`
 - `hasNested` - It was removed in favor of `valuePreStore`
 - `reducers` - It was removed to centralize the reducers using the `combine` method.

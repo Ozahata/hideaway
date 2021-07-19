@@ -5,7 +5,7 @@ describe('nested -> generateNestedLegacy', () => {
   it('should return the previous state if the nested does not contain the key', () => {
     // If the method is requested, it will replace with an object and override the previous value.
     const expected = 'OK';
-    const nested = ({} as unknown) as IHideawayNestedProps;
+    const nested = {} as unknown as IHideawayNestedProps;
     const result = generateNestedLegacy(expected, nested, 'Hogue');
     // expect(result).toBe(expected);
     expect(result).toStrictEqual({});
@@ -14,7 +14,7 @@ describe('nested -> generateNestedLegacy', () => {
   it('should return the previous state if the nested does not contain the keys', () => {
     // If the method is requested, it will replace with an object and override the previous value.
     const expected = 'OK';
-    const nested = ({ path: ['one'] } as unknown) as IHideawayNestedProps;
+    const nested = { path: ['one'] } as unknown as IHideawayNestedProps;
     const result = generateNestedLegacy(expected, nested, 'Hogue');
     // expect(result).toBe(expected);
     expect(result).toStrictEqual({ one: 'Hogue' });

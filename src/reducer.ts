@@ -65,6 +65,12 @@ export const createReducer = (
     let currPath: string[] = [];
 
     const { path, valuePreStore } = action[HIDEAWAY] || {};
+
+    // For actions that doesn't require the state manager nor nested
+    if (!isObject(action[HIDEAWAY])) {
+      return reducer(currState, action);
+    }
+
     const isNested =
       (Array.isArray(path) && path.length > 0) ||
       nestedInitialState !== undefined;
@@ -75,6 +81,7 @@ export const createReducer = (
       currPath = generatePath(keys, path);
       currState = pathOr(currState, currPath, defaultValue);
     }
+
     if (isStateManager && !isStateManagerFn(currState)) {
       currState = createStateManager(currState);
     }

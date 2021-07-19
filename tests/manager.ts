@@ -1,4 +1,4 @@
-import { HideawayDispatch, TObject } from '../src';
+import { HIDEAWAY, HideawayDispatch, TObject } from '../src';
 import { createAction } from '../src/action';
 import {
   createStateManager,
@@ -18,17 +18,16 @@ describe('managerApi', () => {
   let api: Api;
   const contentApi = 'api response';
 
-  const createApi = (
-    { ok = true, headers }: TObject = {},
-    content = contentApi,
-  ) => () => {
-    return Promise.resolve({
-      ok,
-      headers: headers || { get: jest.fn() },
-      json: () => JSON.parse(content),
-      text: () => content,
-    });
-  };
+  const createApi =
+    ({ ok = true, headers }: TObject = {}, content = contentApi) =>
+    () => {
+      return Promise.resolve({
+        ok,
+        headers: headers || { get: jest.fn() },
+        json: () => JSON.parse(content),
+        text: () => content,
+      });
+    };
 
   const dispatch = ((action: HideawayAction) =>
     actionDispatch.push(action)) as HideawayDispatch;
@@ -69,7 +68,7 @@ describe('managerApi', () => {
 
       it('should generate a message without action type', () => {
         const key = 'mock';
-        const action = ({} as unknown) as HideawayAction;
+        const action = {} as unknown as HideawayAction;
         const expected =
           `Given an action, reducer "mock" returned undefined. ` +
           `To ignore an action, you must explicitly return the previous state. ` +
@@ -85,14 +84,21 @@ describe('managerApi', () => {
 
     it('should dispatch the action request', async () => {
       const action = createAction(type, { api, isStateManager });
-      const expected = { type: `${type}_REQUEST` };
+      const expected = {
+        type: `${type}_REQUEST`,
+        [HIDEAWAY]: { isStateManager },
+      };
       await managerApi(dispatch, getState, extraArgument, action, onError);
       expect(actionDispatch[0]).toStrictEqual(expected);
     });
 
     it('should dispatch the action response', async () => {
       const action = createAction(type, { api, isStateManager });
-      const expected = { type: `${type}_RESPONSE`, payload: contentApi };
+      const expected = {
+        type: `${type}_RESPONSE`,
+        payload: contentApi,
+        [HIDEAWAY]: { isStateManager },
+      };
       await managerApi(dispatch, getState, extraArgument, action, onError);
       expect(actionDispatch[1]).toStrictEqual(expected);
     });
@@ -110,7 +116,11 @@ describe('managerApi', () => {
         '{"a": 1}',
       );
       const action = createAction(type, { api, isStateManager });
-      const expected = { type: `${type}_RESPONSE`, payload: { a: 1 } };
+      const expected = {
+        type: `${type}_RESPONSE`,
+        payload: { a: 1 },
+        [HIDEAWAY]: { isStateManager },
+      };
       await managerApi(dispatch, getState, extraArgument, action, onError);
       expect(actionDispatch[1]).toStrictEqual(expected);
     });

@@ -1,5 +1,7 @@
 import { getState, getValue } from 'hideaway';
 
-export const getListState = (state) => getState(state, ['api']);
+export const getStateManager = (state) => getState(state, ['stateManager']);
 
-export const getList = (state) => getValue(state, ['apiNested'], 'Not Found');
+export const getNested = (state) => getValue(state, ['nested'], 'Not Found');
+
+export const getAll = (state) => getValue(state, ['all'], 'Not Found');

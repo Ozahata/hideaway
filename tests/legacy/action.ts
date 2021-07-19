@@ -22,10 +22,10 @@ describe('action', () => {
   describe('generateAction', () => {
     const type = 'MOCK';
     const keys = { mock: 'a' };
-    const api = (mockAPI() as unknown) as TFHideawayApi;
+    const api = mockAPI() as unknown as TFHideawayApi;
 
     it('shoud return the simple format', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         isStateManager: false,
       };
@@ -34,7 +34,7 @@ describe('action', () => {
     });
 
     it('should add the complement attribute', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         isStateManager: false,
       };
@@ -43,7 +43,7 @@ describe('action', () => {
     });
 
     it('should add the key attribute', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         keys,
         isStateManager: false,
@@ -53,7 +53,7 @@ describe('action', () => {
     });
 
     it('should be true for allObject', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         keys,
         isStateManager: false,
@@ -64,7 +64,7 @@ describe('action', () => {
 
     it('should add the predicate attribute', () => {
       const predicate = () => true;
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         predicate,
         isStateManager: false,
@@ -75,7 +75,7 @@ describe('action', () => {
 
     it('should add the onError attribute', () => {
       const onError = () => {};
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         onError,
         isStateManager: false,
@@ -85,7 +85,7 @@ describe('action', () => {
     });
 
     it('should create an action without api', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         keys,
         isStateManager: false,
       };
@@ -125,10 +125,10 @@ describe('action', () => {
   describe('generateStateManagerAction', () => {
     const type = 'MOCK';
     const keys = { mock: 'a' };
-    const api = (mockAPI() as unknown) as TFHideawayApi;
+    const api = mockAPI() as unknown as TFHideawayApi;
 
     it('shoud return the simple format', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         isStateManager: true,
       };
@@ -137,7 +137,7 @@ describe('action', () => {
     });
 
     it('should add the complement attribute', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         isStateManager: true,
       };
@@ -148,7 +148,7 @@ describe('action', () => {
     });
 
     it('should add the key attribute', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         keys,
         isStateManager: true,
@@ -158,7 +158,7 @@ describe('action', () => {
     });
 
     it('should be true for allObject', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         keys,
         isStateManager: true,
@@ -172,7 +172,7 @@ describe('action', () => {
 
     it('should add the predicate attribute', () => {
       const predicate = () => true;
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         predicate,
         isStateManager: true,
@@ -183,7 +183,7 @@ describe('action', () => {
 
     it('should add the onError attribute', () => {
       const onError = () => {};
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         api,
         onError,
         isStateManager: true,
@@ -193,7 +193,7 @@ describe('action', () => {
     });
 
     it('should create an action without api', () => {
-      const APIContent: IHideawayActionContent<THideawayAny> = {
+      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
         keys,
         isStateManager: true,
       };

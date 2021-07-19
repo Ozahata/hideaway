@@ -107,7 +107,8 @@ export const getNamespaces = (state, clusterName, tenantName) => {
 import { createAction } from 'hideaway';
 
 export const fetchTenants = (clusterName) =>
-  createAction('FETCH_TENANTS', () => fetch(`http://<HOST>/${custerName}`), {
+  createAction('FETCH_TENANTS', {
+    api: () => fetch(`http://<HOST>/${custerName}`),
     path: ['clusterName'],
     keys: { clusterName },
     isStateManager: true,

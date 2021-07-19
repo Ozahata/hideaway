@@ -101,9 +101,12 @@ export const stateManagerType = (
   onError: OnError | undefined,
 ) => {
   const { type } = action;
-  const { api, apiPreReducer } = action[HIDEAWAY];
+  const { api, apiPreReducer, ...apiRest } = action[HIDEAWAY];
   const cleanAction = omit(action, [HIDEAWAY, 'type', 'payload']);
-  let newAction: HideawayAction = { type: `${type}_REQUEST` };
+  let newAction: HideawayAction = {
+    type: `${type}_REQUEST`,
+    HIDEAWAY: apiRest,
+  };
   dispatch(newAction);
 
   return api(dispatch, getState, extraArgument, action)
@@ -119,6 +122,7 @@ export const stateManagerType = (
     .then((payload: any) => {
       newAction = {
         ...cleanAction,
+        HIDEAWAY: apiRest,
         type: `${type}_RESPONSE`,
         payload: apiPreReducer
           ? apiPreReducer(payload, dispatch, getState, extraArgument, action)
@@ -133,6 +137,7 @@ export const stateManagerType = (
       }
       newAction = {
         ...cleanAction,
+        HIDEAWAY: apiRest,
         type: `${type}_ERROR`,
         payload: newPayload,
       };
@@ -173,15 +178,14 @@ export const generateStateManager = (prefix: string, reducer: Reducer) => {
   return combineShallow(stateReducer);
 };
 
-const prepareReducer = (initialState: any, reducers: Reducers) => (
-  state: any,
-  action: HideawayAction,
-) => {
-  if (Object.prototype.hasOwnProperty.call(reducers, action.type)) {
-    return reducers[action.type](state, action);
-  }
-  return state;
-};
+const prepareReducer =
+  (initialState: any, reducers: Reducers) =>
+  (state: any, action: HideawayAction) => {
+    if (Object.prototype.hasOwnProperty.call(reducers, action.type)) {
+      return reducers[action.type](state, action);
+    }
+    return state;
+  };
 
 /**
  * Message from `combineReducers`
@@ -207,24 +211,23 @@ export const getUndefinedStateErrorMessage = (
  * Simplified version of `combineReducers`
  * {@link https://github.com/reduxjs/redux/blob/master/src/combineReducers.ts}
  */
-const combineShallow = /* istanbul ignore next */ (reducers: Reducers) => (
-  state: any,
-  action: HideawayAction,
-) => {
-  const nextState: TObject = {};
-  Object.keys(reducers).map((key: string) => {
-    const reducer = reducers[key];
-    const previousStateForKey = isObject(state) ? state[key] : undefined;
-    const nextStateForKey = reducer(previousStateForKey, action);
-    if (nextStateForKey === undefined) {
-      const errorMessage = getUndefinedStateErrorMessage(key, action);
-      throw new Error(errorMessage);
-    }
-    nextState[key] = nextStateForKey;
-    return null;
-  });
-  return nextState;
-};
+const combineShallow =
+  /* istanbul ignore next */
+  (reducers: Reducers) => (state: any, action: HideawayAction) => {
+    const nextState: TObject = {};
+    Object.keys(reducers).map((key: string) => {
+      const reducer = reducers[key];
+      const previousStateForKey = isObject(state) ? state[key] : undefined;
+      const nextStateForKey = reducer(previousStateForKey, action);
+      if (nextStateForKey === undefined) {
+        const errorMessage = getUndefinedStateErrorMessage(key, action);
+        throw new Error(errorMessage);
+      }
+      nextState[key] = nextStateForKey;
+      return null;
+    });
+    return nextState;
+  };
 
 export const isStateManagerFn = (value: any) => {
   return (

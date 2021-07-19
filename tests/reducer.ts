@@ -282,19 +282,13 @@ describe('reducer', () => {
         ).toStrictEqual(expected);
       });
 
-      it('should update the same value field', () => {
+      it('should ignore nested and state manager', () => {
         state = { a: { b: { d: 1 } } };
-        action = createAction('SET_VALUE_RESPONSE', {
-          payload,
-          path: ['a', 'b', 'd'],
-          isStateManager,
-        });
-        const value = { ...createStateManager(payload) };
-        const expected = { a: { b: { d: value } } };
+        action = createAction('CLEAR_RESPONSE', { valuePreStore: () => ({}) });
+        const expected = {};
         const manager = createReducer('INITIAL', nestAndState);
-        const setValue = (_: any, a: any) => a.payload;
         expect(
-          manager.combine({ SET_VALUE: setValue })(state, action),
+          manager.combine({ CLEAR: () => 'valuePreStore' })(state, action),
         ).toStrictEqual(expected);
       });
     });
