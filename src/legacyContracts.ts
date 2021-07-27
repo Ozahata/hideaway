@@ -93,6 +93,11 @@ export interface IHideawayReducerOptions<S> {
   hasNested?: boolean;
   isStateManager?: boolean;
   reducers?: IHideawayActionReducer<S>;
+  /**
+   * The initial value when it does not find the path.
+   * PS: to nested works with state manager, this value must be true.
+   */
+  nestedInitialState?: any;
 }
 
 export interface IHideawayCombineOptions {

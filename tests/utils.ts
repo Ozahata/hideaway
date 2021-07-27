@@ -134,17 +134,24 @@ describe('utils -> has', () => {
 });
 
 describe('utils -> hasPath', () => {
-  const obj = { a: { b: { c: 3 } } };
+  const obj = { a: { b: { c: 3 } }, d: null, e: [] };
 
   it('should return false if not find the path', () => {
+    expect(hasPath(obj, ['d', 'f'])).toBeFalsy();
+    expect(hasPath(obj, ['e', 'f'])).toBeFalsy();
     expect(hasPath(obj, ['b'])).toBeFalsy();
     expect(hasPath(obj, [])).toBeFalsy();
+    expect(hasPath(null as unknown as TObject, ['a'])).toBeFalsy();
+    expect(hasPath([] as unknown as TObject, ['a'])).toBeFalsy();
+    expect(hasPath({} as TObject, ['a'])).toBeFalsy();
   });
 
   it('should return true for existing path', () => {
     expect(hasPath(obj, ['a', 'b', 'c'])).toBeTruthy();
     expect(hasPath(obj, ['a', 'b'])).toBeTruthy();
     expect(hasPath(obj, ['a'])).toBeTruthy();
+    expect(hasPath(obj, ['d'])).toBeTruthy();
+    expect(hasPath(obj, ['e'])).toBeTruthy();
   });
 });
 

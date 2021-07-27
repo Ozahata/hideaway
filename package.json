@@ -1,6 +1,6 @@
 {
   "name": "hideaway",
-  "version": "2.0.0-beta.3",
+  "version": "2.0.0-beta.6.1",
   "description": "Hideaway middleware for Redux",
   "license": "MIT",
   "homepage": "https://github.com/Ozahata/hideaway",
@@ -32,7 +32,8 @@
     "format:check": "prettier --list-different \"{src,tests}/**/*.{js,ts}\"",
     "check-types": "tsc --noEmit",
     "prepublishOnly": "npm run clean && npm run check-types && npm run format:check && npm run lint && npm test",
-    "prepack": "npm run clean && webpack --mode=production --progress --profile --color",
+    "prepack:dev": "npm run clean && webpack --mode=development --progress --color --watch",
+    "prepack": "npm run clean && webpack --mode=production --progress --color",
     "prepare": "husky install"
   },
   "peerDependencies": {

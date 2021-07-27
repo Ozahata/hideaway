@@ -7,17 +7,22 @@ import {
 } from '../../src/legacyContracts';
 import {
   hideConsoleError,
+  hideConsoleWarn,
   mockAPI,
   restoreConsoleError,
+  restoreConsoleWarn,
 } from './__ignore_tests__/common';
 
 describe('action', () => {
-  let originalConsole: any;
+  let originalConsoleErr: any;
+  let originalConsoleWarn: any;
   beforeAll(() => {
-    originalConsole = hideConsoleError();
+    originalConsoleErr = hideConsoleError();
+    originalConsoleWarn = hideConsoleWarn();
   });
   afterAll(() => {
-    restoreConsoleError(originalConsole);
+    restoreConsoleError(originalConsoleErr);
+    restoreConsoleWarn(originalConsoleWarn);
   });
   describe('generateAction', () => {
     const type = 'MOCK';
@@ -64,13 +69,8 @@ describe('action', () => {
 
     it('should add the predicate attribute', () => {
       const predicate = () => true;
-      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
-        api,
-        predicate,
-        isStateManager: false,
-      };
       const result = generateAction(type, api, { predicate });
-      expect(result).toStrictEqual({ type, [HIDEAWAY]: APIContent });
+      expect(result[HIDEAWAY]).toHaveProperty('predicate');
     });
 
     it('should add the onError attribute', () => {
@@ -172,13 +172,8 @@ describe('action', () => {
 
     it('should add the predicate attribute', () => {
       const predicate = () => true;
-      const APIContent: Partial<IHideawayActionContent<THideawayAny>> = {
-        api,
-        predicate,
-        isStateManager: true,
-      };
       const result = generateStateManagerAction(type, api, { predicate });
-      expect(result).toStrictEqual({ type, [HIDEAWAY]: APIContent });
+      expect(result[HIDEAWAY]).toHaveProperty('predicate');
     });
 
     it('should add the onError attribute', () => {

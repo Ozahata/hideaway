@@ -131,6 +131,19 @@ describe('reducer', () => {
       expect(result.error).toBeNull();
     });
 
+    it('should change the value when loading', () => {
+      state = payload;
+      action = createAction('SET_VALUE_REQUEST', {
+        isStateManager,
+        valueRequest: initialState,
+      });
+      const manager = createReducer(null, { isStateManager });
+      const result = manager.combine(reducers)(state, action);
+      expect(result.loading).toBeTruthy();
+      expect(result.value).toEqual(initialState);
+      expect(result.error).toBeNull();
+    });
+
     it('should not change the value', () => {
       action = createAction('SET_VALUE_REQUEST', { isStateManager });
       state = createStateManager(payload);
@@ -152,11 +165,25 @@ describe('reducer', () => {
     });
 
     it('should return the error', () => {
-      action = createAction('SET_VALUE_ERROR', { payload });
+      action = createAction('SET_VALUE_ERROR', { isStateManager, payload });
       const manager = createReducer(null, { isStateManager });
       const result = manager.combine(reducers)(state, action);
       expect(result.loading).toBeFalsy();
       expect(result.value).toBeNull();
+      expect(result.error).toBe(payload);
+    });
+
+    it('should change the value when it returns the error', () => {
+      state = payload;
+      action = createAction('SET_VALUE_ERROR', {
+        isStateManager,
+        payload,
+        valueError: initialState,
+      });
+      const manager = createReducer(null, { isStateManager });
+      const result = manager.combine(reducers)(state, action);
+      expect(result.loading).toBeFalsy();
+      expect(result.value).toEqual(initialState);
       expect(result.error).toBe(payload);
     });
 

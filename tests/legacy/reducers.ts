@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { createAction } from '../../src/action';
 import { ReducerManagement, ReducerStateManagement } from '../../src/legacy';
 import { testReducer } from './__ignore_tests__/reducer';
 
@@ -79,6 +80,45 @@ describe('reducer -> ReducerManagement -> combine', () => {
         payload: message,
       },
     );
+    expect(result).toStrictEqual(expected);
+  });
+
+  it('should automatically set the state for nested and state manager', () => {
+    const initialState = 'Initial state';
+    const message = 'Action result';
+    const expected = {
+      a: {
+        loading: false,
+        value: {},
+        error: message,
+      },
+    };
+    const action = createAction('SIMPLE_ACTION_ERROR', {
+      payload: message,
+      path: ['a'],
+    });
+    const manager = new ReducerStateManagement({
+      initialState,
+      isNested: true,
+      reducers: {
+        SIMPLE_ACTION: testReducer,
+      },
+    });
+    const result = manager.combine()({}, action);
+    expect(result).toStrictEqual(expected);
+  });
+
+  it('should automatically set the state for nested and state manager', () => {
+    const initialState = 'Initial state';
+    const expected = {};
+    const manager = new ReducerStateManagement({
+      initialState,
+      isNested: true,
+      reducers: {
+        SIMPLE_ACTION: testReducer,
+      },
+    });
+    const result = manager.combine()({}, { type: 'SKIP' });
     expect(result).toStrictEqual(expected);
   });
 });

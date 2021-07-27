@@ -32,6 +32,7 @@ export const hasPath = (object: TObject, path: string[]) => {
     return result;
   }
   length = object == null ? 0 : object.length;
+  /* istanbul ignore next - Not coverage the object */
   return !!length && (Array.isArray(object) || isObject(object));
 };
 
@@ -127,6 +128,7 @@ export const deepCopy = (value: any, deep = -1, countDeep = 0): any => {
   }
   const result: TObject = {};
   for (const [k, v] of Object.entries(value)) {
+    /* istanbul ignore next - Not coverage the v */
     result[k] = !isLimitReached ? deepCopy(v, deep, countDeep + 1) : v;
   }
   return result;

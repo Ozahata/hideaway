@@ -54,6 +54,16 @@ interface ActionArgs {
    * A function that runs before the value goes to the store.
    */
   valuePreStore?: valuePreStore;
+  /**
+   * A value that replaces the value property for the state manager when the API
+   * sends the request.
+   */
+  valueRequest?: any;
+  /**
+   * A value that replaces the value property for the state manager when the API
+   * has an error.
+   */
+  valueError?: any;
   [key: string]: any;
 }
 
@@ -85,6 +95,8 @@ export const createAction = (type: string, options: ActionArgs = {}) => {
     onError,
     valuePreStore,
     dispatchTypeOnError,
+    valueRequest,
+    valueError,
     ...rest
   } = options;
   const action: TObject = { ...rest, type };
@@ -99,6 +111,8 @@ export const createAction = (type: string, options: ActionArgs = {}) => {
       ...(apiPreReducer && { apiPreReducer }),
       ...(path && { path }),
       ...(keys && { keys }),
+      ...(valueRequest && { valueRequest }),
+      ...(valueError && { valueError }),
     };
   }
 

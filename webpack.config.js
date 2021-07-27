@@ -27,7 +27,7 @@ module.exports = function (env) {
 
   if (isDevelopment) {
     return merge(baseConfig, {
-      devtool: 'inline-source-map',
+      devtool: 'eval-source-map',
     });
   } else {
     return merge(baseConfig, {

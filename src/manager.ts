@@ -145,6 +145,17 @@ export const stateManagerType = (
     });
 };
 
+const validateStateReducer = (
+  action: HideawayAction,
+  propName: string,
+  defaultValue: any,
+) => {
+  const props = action[HIDEAWAY];
+  const hasProp = props !== undefined && props[propName] !== undefined;
+  if (hasProp) return props[propName];
+  return defaultValue;
+};
+
 const loadingReducer: ManagerReducer = (prefix) => ({
   [`${prefix}_REQUEST`]: () => true,
   [`${prefix}_RESPONSE`]: () => false,
@@ -152,8 +163,11 @@ const loadingReducer: ManagerReducer = (prefix) => ({
 });
 
 const valueReducer: ManagerReducer = (prefix, reducer) => ({
-  [`${prefix}_REQUEST`]: (state) => state,
+  [`${prefix}_REQUEST`]: (state, action) =>
+    validateStateReducer(action, 'valueRequest', state),
   [`${prefix}_RESPONSE`]: reducer,
+  [`${prefix}_ERROR`]: (state, action) =>
+    validateStateReducer(action, 'valueError', state),
 });
 
 const errorReducer: ManagerReducer = (prefix) => ({

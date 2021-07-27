@@ -403,7 +403,7 @@ describe('middleware -> action -> getStateLegacy', () => {
     });
   });
 
-  it('should return the defaultValue if the value is null', () => {
+  it('should return the null for valid state manager', () => {
     const state = {
       mock: {
         loading: true,
@@ -419,6 +419,29 @@ describe('middleware -> action -> getStateLegacy', () => {
     const result = getStateLegacy(state, options);
     expect(result).toStrictEqual({
       loading: true,
+      value: null,
+      error: null,
+      // Removed
+      // nested,
+    });
+  });
+
+  it('should return the defaultValue if the value is null', () => {
+    const state = {
+      mock: {
+        loading: true,
+        value: null,
+        error: null,
+      },
+    };
+    const defaultValue = 'default';
+    const options: IHideawaySelectorOptions = {
+      defaultValue,
+      path: ['mockInvalid'],
+    };
+    const result = getStateLegacy(state, options);
+    expect(result).toStrictEqual({
+      loading: false,
       value: defaultValue,
       error: null,
       // Removed

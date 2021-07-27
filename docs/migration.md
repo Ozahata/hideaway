@@ -35,7 +35,7 @@ The `options` has the following changes:
 - `apiPreReducer` - It receives additional parameters to have more flexibility.
 - `allObject` - It was removed in favor of `valuePreStore`
 - `complement` - It was removed since the rest of the values are added in the action.
-- `predicate` - It receives the dispatch in the first argument to keep the same format as the api.
+- `predicate` - It receives the dispatch in the first argument to keep the same format as the api. New format: `(dispatch, getState, extraArgumets, action)`
 - `onError` - The arguments changed the position, and the action was included.
 
 ### Reducer

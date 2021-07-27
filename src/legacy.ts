@@ -1,4 +1,5 @@
 import { createAction } from './action';
+import { Predicate, valuePreStore } from './contracts';
 import {
   IHideawayActionOptions,
   IHideawayActionReducer,
@@ -9,8 +10,9 @@ import {
   IHideawayCombineOptions,
   TFGetValue,
   TFGetState,
+  TFHideawayGetState,
+  THideawayAnyObject,
 } from './legacyContracts';
-import { createStateManager } from './manager';
 import { generateNested, generatePath } from './nested';
 import { createReducer } from './reducer';
 import { getState, getValue } from './selectors';
@@ -20,13 +22,20 @@ export const generateAction = <S = THideawayAny>(
   type: string,
   api: TFHideawayApi | undefined,
   options: IHideawayActionOptions<S> = {},
+  newOptions: {
+    dispatchTypeOnError?: string;
+    valuePreStore?: valuePreStore;
+    valueRequest?: any;
+    valueError?: any;
+    [key: string]: any;
+  } = {},
 ) => {
   const {
     apiPreReducer,
     keys,
     path,
     complement,
-    predicate,
+    predicate: oldPredicate,
     onError,
     allObject,
     isStateManager = false,
@@ -37,38 +46,13 @@ export const generateAction = <S = THideawayAny>(
     console.error('allObject cannot be emulated, replace with valuePreStore');
   }
 
-  return createAction(type, {
-    api,
-    apiPreReducer,
-    keys,
-    path,
-    ...(predicate && { predicate }),
-    ...(onError && { onError }),
-    ...(isStateManager !== undefined && { isStateManager }),
-    ...(complement && { ...complement }),
-    ...(payload && { payload }),
-  });
-};
-
-export const generateStateManagerAction = <S = THideawayAny>(
-  type: string,
-  api: TFHideawayApi | undefined,
-  options: IHideawayActionOptions<S> = {},
-) => {
-  const {
-    apiPreReducer,
-    keys,
-    path,
-    complement,
-    predicate,
-    onError,
-    allObject,
-    isStateManager = true,
-    payload,
-  } = options;
-
-  if (allObject) {
-    console.error('allObject cannot be emulated, replace with valuePreStore');
+  let predicate: Predicate | undefined = undefined;
+  if (oldPredicate) {
+    console.warn(
+      `Predicate has new format, change ${type} when migrate to the new format`,
+    );
+    predicate = (_, g, e) =>
+      oldPredicate(g as TFHideawayGetState<unknown>, e as THideawayAnyObject);
   }
 
   return createAction(type, {
@@ -81,6 +65,58 @@ export const generateStateManagerAction = <S = THideawayAny>(
     ...(isStateManager !== undefined && { isStateManager }),
     ...(complement && { ...complement }),
     ...(payload && { payload }),
+    ...(newOptions && { ...newOptions }),
+  });
+};
+
+export const generateStateManagerAction = <S = THideawayAny>(
+  type: string,
+  api: TFHideawayApi | undefined,
+  options: IHideawayActionOptions<S> = {},
+  newOptions: {
+    dispatchTypeOnError?: string;
+    valuePreStore?: valuePreStore;
+    valueRequest?: any;
+    valueError?: any;
+    [key: string]: any;
+  } = {},
+) => {
+  const {
+    apiPreReducer,
+    keys,
+    path,
+    complement,
+    predicate: oldPredicate,
+    onError,
+    allObject,
+    isStateManager = true,
+    payload,
+  } = options;
+
+  if (allObject) {
+    console.error('allObject cannot be emulated, replace with valuePreStore');
+  }
+
+  let predicate: Predicate | undefined = undefined;
+  if (oldPredicate) {
+    console.warn(
+      `Predicate has new format, change ${type} when migrate to createAction`,
+    );
+    predicate = (_, g, e) =>
+      oldPredicate(g as TFHideawayGetState<unknown>, e as THideawayAnyObject);
+  }
+
+  return createAction(type, {
+    api,
+    apiPreReducer,
+    keys,
+    path,
+    ...(predicate && { predicate }),
+    ...(onError && { onError }),
+    ...(isStateManager !== undefined && { isStateManager }),
+    ...(complement && { ...complement }),
+    ...(payload && { payload }),
+    ...(newOptions && { ...newOptions }),
   });
 };
 
@@ -109,17 +145,20 @@ export class ReducerManagement<S> {
       isStateManager,
       nested,
       reducers = {},
+      nestedInitialState,
     } = props;
     if (displayError !== undefined) {
       console.error('displayError is not supported, use onError');
     }
     if (hasNested !== undefined) {
-      console.error('displayError is not supported, use valuePreStore');
+      console.error('hasNested is not supported, use valuePreStore');
     }
     this.reducers = reducers;
-    const nestedInitialState = isNested ? null : undefined;
+    let nestState = isNested && isStateManager ? {} : undefined;
+    nestState =
+      nestedInitialState !== undefined ? nestedInitialState : nestState;
     this.reducerManager = createReducer(initialState, {
-      nestedInitialState,
+      nestedInitialState: nestState,
       ...(isStateManager !== undefined && { isStateManager }),
       ...(nested != undefined && { ...nested }),
     });
@@ -131,7 +170,7 @@ export class ReducerManagement<S> {
   ) => {
     const { ignoreCheck } = options;
     if (ignoreCheck !== undefined) {
-      console.log(
+      console.warn(
         'ignoreCheck does not exist anymore (the types can add together)',
       );
     }
@@ -157,18 +196,22 @@ export class ReducerStateManagement<S> {
       isStateManager = true,
       nested,
       reducers = {},
+      nestedInitialState,
     } = props;
     if (displayError !== undefined) {
       console.error('displayError is not supported, use onError');
     }
     if (hasNested !== undefined) {
-      console.error('displayError is not supported, use valuePreStore');
+      console.error('hasNested is not supported, use valuePreStore');
     }
     this.isStateManager = isStateManager;
     this.reducers = reducers;
-    const nestedInitialState = isNested ? null : undefined;
-    this.reducerManager = createReducer(initialState, {
-      nestedInitialState,
+    const state = isNested && initialState === null ? {} : initialState;
+    let nestState = isNested && isStateManager ? {} : undefined;
+    nestState =
+      nestedInitialState !== undefined ? nestedInitialState : nestState;
+    this.reducerManager = createReducer(state, {
+      nestedInitialState: nestState,
       ...(isStateManager !== undefined && { isStateManager }),
       ...(nested != undefined && { ...nested }),
     });
@@ -180,7 +223,7 @@ export class ReducerStateManagement<S> {
   ) => {
     const { ignoreCheck } = options;
     if (ignoreCheck !== undefined) {
-      console.log(
+      console.warn(
         'ignoreCheck does not exist anymore (the types can add together)',
       );
     }
@@ -219,8 +262,5 @@ export const getStateLegacy: TFGetState = (state, options = {}) => {
     };
     newPath = generatePath(nestedKeys || {}, [...path, ...(nestedPath || [])]);
   }
-  let result = getState(state, newPath, defaultValue);
-  result = createStateManager(result);
-  result.value = result.value || defaultValue;
-  return createStateManager(result);
+  return getState(state, newPath, defaultValue);
 };

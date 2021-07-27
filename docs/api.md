@@ -67,7 +67,7 @@ Manager the reducers before combining.
 - `initialSate` (any): The initial value that the store initialize.
 - `options` (object): Additional arguments for the action.
   - `isStateManager` (boolean): If true, the hideaway will process as state manager. The state manager can dispatch three types from the original type (`${type}_REQUEST`, `${type}_RESPONSE`, `${type}_ERROR`). The result returns an object with three (loading, value, error).
-  - `nestedInitialState` (boolean): The initial value when it does not find the path. **`NOTE:`** to the nested works with the state manager, this value must be true.
+  - `nestedInitialState` (any): The initial value when it does not find the path. **`NOTE:`** to the nested works with the state manager, this value must be an object.
 
 ## Returns
 

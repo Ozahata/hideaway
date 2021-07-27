@@ -112,7 +112,9 @@ export const createReducer = (
     const isNested = nestedInitialState !== undefined;
 
     if (isStateManager && !isStateManagerFn(state) && !isNested) {
-      return createStateManager(state || initialState);
+      return createStateManager(
+        state === undefined || state === null ? initialState : state,
+      );
     }
     if (isNested) {
       if (isStateManager && isStateManagerFn(state)) {
